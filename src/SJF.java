@@ -51,7 +51,20 @@ public class SJF {
     }
 
     private void rearrangement(ArrayList<Process> sortedByArrival){
-        Collections.sort(sortedByArrival, Collections.reverseOrder());
+        Collections.sort(sortedByArrival, (o1, o2) -> {
+            int value = o1.getArrivalTime();
+            if (o2.getArrivalTime() == value) {
+
+               if (o2.getBurstTime() < value) return 1;
+                else if (o2.getBurstTime() > value) return -1;
+                else return 0;
+            } else {
+
+               if (o2.getArrivalTime() < value) return 1;
+               else if (o2.getArrivalTime() > value) return -1;
+                else return 0;
+           }
+       });
     }
     public SJF(){
         //TODO allocate th ready Queue
@@ -60,22 +73,13 @@ public class SJF {
     }
     public ArrayList<Process> start(ArrayList<Process> sortedByArrival) throws InterruptedException {
         ArrayList<Process> output = new ArrayList<>();
-        ArrayList<Process> guiOutput = new ArrayList<>();
-        Process tmp;
-        boolean flag = true;
+        Process process;
         rearrangement(sortedByArrival);
         int lastFinishTime = 0;
 
-        for(int i=0;(i<sortedByArrival.size())||(sortedByArrival.size()>0);i++){
+        int time = 0;
+        while(sortedByArrival.size()>0){
             ArrayList<Process> windowOfArrived = new ArrayList<>();
-            if(flag){
-                sortedByArrival.get(i).setWaitingTime(0);
-                sortedByArrival.get(i).setTurnaroundTime(sortedByArrival.get(i).getBurstTime());
-                output.add(sortedByArrival.get(i));
-                lastFinishTime += sortedByArrival.get(i).getBurstTime();
-                sortedByArrival.remove(sortedByArrival.get(i));
-                flag = false;
-            }
             for(int j=0;j<sortedByArrival.size();j++){
                 if(sortedByArrival.get(j).getArrivalTime()<=lastFinishTime){
                     windowOfArrived.add(sortedByArrival.get(j));
@@ -83,34 +87,33 @@ public class SJF {
             }
             if((windowOfArrived.size()==0)){
                 output.add(sortedByArrival.get(0));
-                sortedByArrival.get(i).setWaitingTime(0);
-                sortedByArrival.get(i).setTurnaroundTime(sortedByArrival.get(i).getBurstTime());
+                time = sortedByArrival.get(0).getArrivalTime();
+                for (int j = 0; j <sortedByArrival.get(0).getBurstTime(); j++) {
+                    graph.add(sortedByArrival.get(0), time);
+                    time++;
+                }
+                sortedByArrival.get(0).setWaitingTime(0);
+                sortedByArrival.get(0).setTurnaroundTime(sortedByArrival.get(0).getBurstTime());
                 lastFinishTime=sortedByArrival.get(0).getArrivalTime()+sortedByArrival.get(0).getBurstTime();
+                graph.addTerminatedProcess(sortedByArrival.get(0));
                 sortedByArrival.remove(sortedByArrival.get(0));
             }
             else {
-                tmp = getSmallestBurst(windowOfArrived);
-                tmp.setWaitingTime(lastFinishTime-tmp.getArrivalTime());
-                tmp.setTurnaroundTime(tmp.getWaitingTime()+tmp.getBurstTime());
-                lastFinishTime += tmp.getBurstTime();
-                output.add(tmp);
+                process = getSmallestBurst(windowOfArrived);
+                process.setWaitingTime(lastFinishTime-process.getArrivalTime());
+                process.setTurnaroundTime(process.getWaitingTime()+process.getBurstTime());
+                lastFinishTime += process.getBurstTime();
+                output.add(process);
+                for (int j = 0; j <process.getBurstTime(); j++) {
+                    graph.add(process, time);
+                    time++;
+                }
+                graph.addTerminatedProcess(process);
                 windowOfArrived.clear();
-                sortedByArrival.remove(tmp);
-                //calc waiting and TAT
+                sortedByArrival.remove(process);
             }
-        if (output.size()!=5)i=0;
         }
-        //for GUI
-        int time = 0;
-        for(int i=0;i<output.size();i++){
-            for (int j = 0; j < output.get(i).getBurstTime(); j++) {
-                guiOutput.add(output.get(i));
-                //print(output.get(i));
-                graph.add(output.get(i), time);
-                time++;
-            }
-           graph.addTerminatedProcess(output.get(i));
-        }
+
         Out = output;
         return output;
     }
@@ -125,25 +128,7 @@ public class SJF {
         }
         return p;
     }
-    private void sortByArrivalTime(ArrayList<Process> sortedByArrival){
-        Process tmpProcess;
-        for (int i=0;i<sortedByArrival.size();i++){
-            for(int j=i+1;j<sortedByArrival.size();j++){
 
-                if ((sortedByArrival.get(i).getArrivalTime()==sortedByArrival.get(j).getArrivalTime())&&(sortedByArrival.get(i).getBurstTime()>sortedByArrival.get(j).getBurstTime())){
-                    tmpProcess = sortedByArrival.get(i);
-                    sortedByArrival.set(i,sortedByArrival.get(j));
-                    sortedByArrival.set(j,tmpProcess);
-                }
-
-                if (sortedByArrival.get(i).getArrivalTime()>sortedByArrival.get(j).getArrivalTime()){
-                    tmpProcess = sortedByArrival.get(i);
-                    sortedByArrival.set(i,sortedByArrival.get(j));
-                    sortedByArrival.set(j,tmpProcess);
-                }
-            }
-        }
-    }
     private void print(ArrayList<Process> p){
         for (int i=0;i<p.size();i++){
             if(p.get(i)==null){

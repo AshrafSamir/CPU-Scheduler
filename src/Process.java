@@ -1,7 +1,7 @@
 import java.awt.*;
 import java.util.Comparator;
 
-public class Process implements Comparable<Process>{
+public class Process{
     private String name;
     private Color color;
     private int arrivalTime;
@@ -96,21 +96,5 @@ public class Process implements Comparable<Process>{
     }
 
 
-    @Override
-    public int compareTo(Process o) {
 
-        int value = arrivalTime;
-        if (o.arrivalTime == value){
-
-            if (o.burstTime > value) return 1;
-            else if (o.burstTime < value) return -1;
-            else return 0;
-        }
-        else{
-
-            if (o.arrivalTime > value) return 1;
-            else if (o.arrivalTime < value) return -1;
-            else return 0;
-        }
-    }
 }
